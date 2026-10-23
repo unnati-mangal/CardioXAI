@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Frontend
+node_modules/
+dist/
+.env
+.env.local
+
+# Model/data artifacts
+*.joblib
+*.pkl
+*.parquet
+*.csv
+.ipynb_checkpoints/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
