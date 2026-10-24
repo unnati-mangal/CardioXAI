@@ -1,25 +1,94 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
 .venv/
 venv/
+env/
+ENV/
+
+# Test / coverage
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.coveragexml
+nosetests.xml
+coverage.xml
+
+# Environment / secrets -- NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+*.secret
+*.secrets
+secrets.json
 
 # Frontend
 node_modules/
-dist/
-.env
-.env.local
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
 
-# Model/data artifacts
+# TypeScript build info cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ML / model artifacts -- serialised models, never commit
 *.joblib
 *.pkl
-*.parquet
+*.pickle
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+
+# Data files -- do not commit raw datasets
 *.csv
+*.parquet
+*.feather
+*.arrow
+*.npy
+*.npz
+
+# Jupyter
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Logs
+*.log
+logs/
+*.log.*
 
 # IDE / OS
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
+
+# Supabase local dev
+.supabase/
+supabase/.branches/
+supabase/.temp/
