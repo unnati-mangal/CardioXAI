@@ -1,4 +1,3 @@
-import { FlaskConical } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ReferenceLine, ResponsiveContainer, Cell,
@@ -9,97 +8,73 @@ interface ShapExplanationProps {
   values: ShapEntry[];
 }
 
-const POSITIVE_COLOR = '#397653'; // forest-green — pushes risk up
-const NEGATIVE_COLOR = '#7C9A7E'; // sage-green   — pushes risk down
+const POS = '#DC2626'; // red – increases risk
+const NEG = '#3D7A5A'; // green – decreases risk
 
 export default function ShapExplanation({ values }: ShapExplanationProps) {
   if (!values || values.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-neutral-100 border-dashed p-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-[#DDE9DD] flex items-center justify-center flex-shrink-0">
-            <FlaskConical className="w-4 h-4 text-[#397653]" />
-          </div>
-          <h3 className="font-semibold text-neutral-700">What Influenced This Prediction?</h3>
-        </div>
-        <p className="text-sm text-neutral-400">
-          SHAP values were not returned. Ensure the ML pipeline is loaded and restart the backend.
+      <div className="card p-5 border-dashed">
+        <p className="text-sm text-brand-muted text-center">
+          SHAP values not available. Place model artifacts and restart the backend.
         </p>
       </div>
     );
   }
 
-  // Show top 10 by absolute value
-  const top = values.slice(0, 10);
-
-  const chartData = top.map((e) => ({
-    label: e.label,
-    value: e.shap_value,
-  }));
+  const top = values.slice(0, 8);
+  const chartData = top.map((e) => ({ label: e.label, value: e.shap_value }));
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-100 p-6">
-
-      <div className="flex items-center gap-3 mb-1">
-        <div className="w-8 h-8 rounded-lg bg-[#DDE9DD] flex items-center justify-center flex-shrink-0">
-          <FlaskConical className="w-4 h-4 text-[#397653]" />
-        </div>
-        <h3 className="font-semibold text-neutral-700">What Influenced This Prediction?</h3>
-      </div>
-
-      <p className="text-xs text-neutral-400 mb-4 ml-11">
-        SHAP contributions in log-odds space. Positive bars increase the model score;
-        negative bars reduce it. SHAP describes model behaviour — not medical causation.
+    <div className="card p-5">
+      <h3 className="font-semibold text-brand-text text-sm mb-1">Top Factors (SHAP)</h3>
+      <p className="text-xs text-brand-muted mb-4">
+        Feature contributions in log-odds. Positive = increases risk; negative = decreases.
       </p>
 
-      {/* Legend */}
-      <div className="flex gap-4 mb-4 text-xs text-neutral-500">
+      <div className="flex gap-4 mb-3 text-xs text-brand-muted">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: POSITIVE_COLOR }} />
-          Increases risk score
+          <span className="inline-block w-3 h-2 rounded-sm" style={{ background: POS }} />
+          Increases risk
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-sm" style={{ background: NEGATIVE_COLOR }} />
-          Decreases risk score
+          <span className="inline-block w-3 h-2 rounded-sm" style={{ background: NEG }} />
+          Decreases risk
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height={Math.max(220, top.length * 28)}>
+      <ResponsiveContainer width="100%" height={Math.max(180, top.length * 26)}>
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
+          margin={{ top: 0, right: 20, left: 4, bottom: 0 }}
         >
           <XAxis
             type="number"
-            tick={{ fontSize: 11, fill: '#687876' }}
+            tick={{ fontSize: 10, fill: '#6B7D72' }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             type="category"
             dataKey="label"
-            width={160}
-            tick={{ fontSize: 11, fill: '#253638' }}
+            width={120}
+            tick={{ fontSize: 10, fill: '#1C2B22' }}
             tickLine={false}
             axisLine={false}
           />
           <Tooltip
-            formatter={(v) => [typeof v === 'number' ? v.toFixed(4) : String(v), 'SHAP (log-odds)']}
-            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E4E8E0' }}
+            formatter={(v) => [typeof v === 'number' ? v.toFixed(4) : String(v), 'SHAP']}
+            contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #DDE8DD' }}
           />
-          <ReferenceLine x={0} stroke="#E4E8E0" />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+          <ReferenceLine x={0} stroke="#DDE8DD" />
+          <Bar dataKey="value" radius={[0, 3, 3, 0]}>
             {chartData.map((entry, i) => (
-              <Cell
-                key={i}
-                fill={entry.value >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR}
-              />
+              <Cell key={i} fill={entry.value >= 0 ? POS : NEG} />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-
     </div>
   );
 }
