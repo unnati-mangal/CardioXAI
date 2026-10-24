@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-off-white:    #F8F7F4;
+    --color-sage-green:   #7C9A7E;
+    --color-forest-green: #2D5016;
+    --color-muted-coral:  #D4826A;
+  }
+
+  body {
+    @apply bg-off-white font-sans text-neutral-800 antialiased;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 12vh auto;
+    padding: 2rem;
+  }
+}
+
+@layer components {
+  .disclaimer {
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+}
