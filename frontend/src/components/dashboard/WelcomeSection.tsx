@@ -1,40 +1,44 @@
 import { useNavigate } from 'react-router-dom';
 import { HeartPulse } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.tsx';
-import Button from '../common/Button';
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function WelcomeSection() {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const displayName = user?.email ?? 'there';
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day:     'numeric',
-    month:   'long',
-    year:    'numeric',
-  });
+  const raw         = user?.email ? user.email.split('@')[0] : 'there';
+  const displayName = raw.charAt(0).toUpperCase() + raw.slice(1);
 
   return (
-    <div className="bg-white rounded-2xl border border-neutral-100 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <p className="text-xs text-neutral-400 mb-1">{today}</p>
-        <h1 className="text-xl font-bold text-forest-green">
-          Welcome back{user ? `, ${displayName.split('@')[0]}` : ''}
-        </h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          Track your cardiovascular risk assessments and review your history.
-        </p>
+    <div className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4
+                    bg-gradient-to-br from-white to-brand-green-light border-brand-border">
+      <div className="flex items-center gap-4">
+        {/* Small heart avatar */}
+        <div className="w-12 h-12 rounded-2xl bg-brand-green flex items-center justify-center flex-shrink-0">
+          <HeartPulse className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-brand-text">
+            {getGreeting()}, {displayName}! 👋
+          </h1>
+          <p className="text-sm text-brand-muted mt-0.5">
+            Take a step towards a healthier heart — get your AI-powered risk prediction today.
+          </p>
+        </div>
       </div>
-
-      <Button
-        variant="primary"
+      <button
         onClick={() => navigate('/predict')}
-        className="sm:flex-shrink-0"
+        className="btn-primary flex-shrink-0 shadow-sm"
       >
         <HeartPulse className="w-4 h-4" />
-        New Assessment
-      </Button>
+        + New Prediction
+      </button>
     </div>
   );
 }

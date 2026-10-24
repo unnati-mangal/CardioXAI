@@ -4,26 +4,92 @@
 
 @layer base {
   :root {
-    --color-off-white:    #F8F7F4;
-    --color-sage-green:   #7C9A7E;
-    --color-forest-green: #2D5016;
-    --color-muted-coral:  #D4826A;
+    --brand-bg:           #F5F7F5;
+    --brand-surface:      #FFFFFF;
+    --brand-border:       #DDE8DD;
+    --brand-green:        #3D7A5A;
+    --brand-green-light:  #EAF2EC;
+    --brand-green-dark:   #2A5940;
+    --brand-text:         #1C2B22;
+    --brand-muted:        #6B7D72;
   }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
 
   body {
-    @apply bg-off-white font-sans text-neutral-800 antialiased;
+    @apply bg-brand-bg font-sans text-brand-text antialiased;
+    margin: 0;
+    padding: 0;
   }
 
-  main {
-    max-width: 900px;
-    margin: 12vh auto;
-    padding: 2rem;
-  }
+  /* Remove default max-width/margin from main so layouts control it */
+  main { max-width: none; margin: 0; padding: 0; }
 }
 
 @layer components {
+  /* Card base */
+  .card {
+    @apply bg-brand-surface rounded-2xl border border-brand-border;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5
+           text-sm font-semibold text-white bg-brand-green
+           hover:bg-brand-green-dark transition-colors focus:outline-none
+           focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2;
+  }
+
+  /* Outline button */
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5
+           text-sm font-semibold text-brand-green bg-transparent
+           border border-brand-green hover:bg-brand-green-light
+           transition-colors focus:outline-none;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5
+           text-sm font-medium text-brand-muted bg-transparent
+           hover:bg-brand-green-light hover:text-brand-text
+           transition-colors focus:outline-none;
+  }
+
+  /* Form field */
+  .field-input {
+    @apply w-full rounded-lg border border-brand-border bg-white
+           px-3 py-2.5 text-sm text-brand-text placeholder:text-brand-muted
+           focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green
+           transition-colors;
+  }
+
+  .field-select {
+    @apply w-full rounded-lg border border-brand-border bg-white
+           px-3 py-2.5 text-sm text-brand-text
+           focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green
+           transition-colors cursor-pointer;
+  }
+
+  /* Risk badge */
+  .badge-low      { @apply text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-green-light text-brand-green; }
+  .badge-moderate { @apply text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700; }
+  .badge-high     { @apply text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-600; }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+           text-brand-muted hover:text-brand-text hover:bg-brand-green-light transition-colors;
+  }
+  .nav-item-active {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+           text-brand-green bg-brand-green-light;
+  }
+
+  /* Disclaimer */
   .disclaimer {
-    color: #6b7280;
-    font-size: 0.9rem;
+    @apply text-xs text-brand-muted text-center;
   }
 }
