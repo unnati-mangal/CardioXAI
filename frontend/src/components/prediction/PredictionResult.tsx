@@ -1,17 +1,19 @@
 import { useNavigate } from 'react-router-dom';
-import { Info } from 'lucide-react';
-import type { PredictionResponse } from '../../types/prediction';
+import { Info, Download } from 'lucide-react';
+import type { PredictionResponse, PredictionInput } from '../../types/prediction';
 import RiskOverview from './RiskOverview';
 import ShapExplanation from './ShapExplanation';
 import LimeExplanation from './LimeExplanation';
-import Button from '../common/Button';
+import PlainEnglishExplanation from './PlainEnglishExplanation';
+import { downloadReport } from '../../utils/reportDownload';
 
 interface PredictionResultProps {
-  result: PredictionResponse;
+  result:          PredictionResponse;
+  input:           PredictionInput;
   onNewPrediction: () => void;
 }
 
-export default function PredictionResult({ result, onNewPrediction }: PredictionResultProps) {
+export default function PredictionResult({ result, input, onNewPrediction }: PredictionResultProps) {
   const navigate  = useNavigate();
   const isStub    = result.status === 'ml_not_ready';
   const hasResult = result.risk_score !== null;
@@ -19,52 +21,100 @@ export default function PredictionResult({ result, onNewPrediction }: Prediction
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── ML not ready notice ─────────────────────────────── */}
+      {/* ML not ready */}
       {isStub && (
-        <div className="flex items-start gap-3 bg-white rounded-2xl border border-neutral-100 p-5 text-sm">
-          <Info className="w-4 h-4 text-neutral-400 flex-shrink-0 mt-0.5" />
+        <div className="card flex items-start gap-3 p-5 text-sm">
+          <Info className="w-4 h-4 text-brand-muted flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-neutral-700 mb-1">Inputs received — model not yet connected</p>
-            <p className="text-neutral-500">{result.message}</p>
-            <p className="mt-2 text-xs text-neutral-400">
-              Place <code className="bg-neutral-100 px-1 rounded">pipeline.joblib</code> in{' '}
-              <code className="bg-neutral-100 px-1 rounded">model/artifacts/</code> and restart the backend.
+            <p className="font-semibold text-brand-text mb-1">Inputs received — model not connected</p>
+            <p className="text-brand-muted">{result.message}</p>
+            <p className="mt-2 text-xs text-brand-muted">
+              Place <code className="bg-brand-bg px-1 rounded">pipeline.joblib</code> in{' '}
+              <code className="bg-brand-bg px-1 rounded">model/artifacts/</code> and restart the backend.
             </p>
           </div>
         </div>
       )}
 
-      {/* ── Risk overview ────────────────────────────────────── */}
+      {/* Risk gauge */}
       {hasResult && <RiskOverview result={result} />}
 
-      {/* ── SHAP chart ───────────────────────────────────────── */}
-      {hasResult && <ShapExplanation values={result.shap_values} />}
-
-      {/* ── LIME chart ───────────────────────────────────────── */}
-      {hasResult && <LimeExplanation values={result.lime_values} />}
-
-      {/* ── What this means ─────────────────────────────────── */}
+      {/* SHAP + "What This Means" side by side */}
       {hasResult && (
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5 text-sm text-neutral-500 leading-relaxed">
-          <p className="font-medium text-neutral-700 mb-2">Understanding this result</p>
-          <ul className="list-disc list-inside space-y-1.5">
-            <li>The percentage is the model's estimated probability for 10-year coronary heart disease risk based on the Framingham study cohort.</li>
-            <li>Feature contributions describe model behaviour, not proof of medical causation.</li>
-            <li>This result does not confirm whether you currently have heart disease.</li>
-            <li>Consult a qualified healthcare professional for medical interpretation.</li>
-          </ul>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <ShapExplanation values={result.shap_values} />
+
+          <div className="card p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="font-semibold text-brand-text text-sm mb-2">What This Means</h3>
+              <ul className="text-xs text-brand-muted space-y-2 list-none">
+                {[
+                  'High blood pressure and elevated cholesterol levels increase risk.',
+                  'Physical activity and lower BMI help reduce your risk.',
+                  'These are model insights only — consult a professional for medical advice.',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-brand-green mt-0.5">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-brand-text text-sm mb-2">Next Steps</h4>
+              <ul className="text-xs text-brand-muted space-y-2">
+                {[
+                  'Consider lifestyle changes.',
+                  'Monitor your health regularly.',
+                  'Consult a healthcare professional.',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-brand-green mt-0.5">→</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Actions ─────────────────────────────────────────── */}
+      {/* LIME explanation */}
+      {hasResult && result.lime_values.length > 0 && (
+        <LimeExplanation values={result.lime_values} />
+      )}
+
+      {/* Plain-English explanation + recommendations */}
+      {hasResult && (
+        <PlainEnglishExplanation result={result} input={input} />
+      )}
+
+      {/* Actions */}
       <div className="flex gap-3 flex-wrap">
-        <Button variant="primary" onClick={onNewPrediction}>
-          New Prediction
-        </Button>
-        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+        <button onClick={onNewPrediction} className="btn-primary">
+          + New Prediction
+        </button>
+        <button onClick={() => navigate('/dashboard')} className="btn-outline">
           Back to Dashboard
-        </Button>
+        </button>
+        {hasResult && (
+          <button
+            onClick={() => downloadReport(result, input)}
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold
+                       border border-brand-border bg-white text-brand-text
+                       hover:bg-brand-bg transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Download Report
+          </button>
+        )}
       </div>
+
+      <p className="text-xs text-brand-muted text-center">
+        ⚠️ This tool is for research purposes only and not a medical diagnosis.
+      </p>
 
     </div>
   );
