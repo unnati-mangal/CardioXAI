@@ -299,3 +299,156 @@ export function downloadReport(
   // Small delay so styles render before the print dialog opens
   setTimeout(() => { win.print(); }, 400);
 }
+
+import type { Assessment } from '../types/assessment';
+
+/**
+ * Download a PDF report from a saved Assessment row (from history).
+ * SHAP/LIME are not stored in DB so this report shows inputs + risk result + recommendations.
+ */
+export function downloadAssessmentReport(a: Assessment): void {
+  const pct = a.prediction_probability !== null ? Math.round(a.prediction_probability * 100) : null;
+  const riskDesc =
+    pct === null ? '—'
+    : pct <= 15  ? 'Low Risk'
+    : pct <= 30  ? 'Moderate Risk'
+    : 'High Risk';
+  const riskColor =
+    pct === null ? '#6B7D72'
+    : pct <= 15  ? '#3D7A5A'
+    : pct <= 30  ? '#D97706'
+    : '#DC2626';
+  const sexStr = a.sex === 1 ? 'Male' : 'Female';
+  const recorded = new Date(a.created_at).toLocaleString('en-GB', { dateStyle: 'long', timeStyle: 'short' });
+
+  // Personalised recommendations based on stored input values
+  const recs: Array<[string, string]> = [];
+  if (a.sys_bp > 120)       recs.push(['Manage your blood pressure',    `Your systolic BP is ${a.sys_bp} mmHg. Target: below 120 mmHg.`]);
+  if (a.tot_chol > 200)     recs.push(['Lower your cholesterol',        `Total cholesterol ${a.tot_chol} mg/dL. Reduce saturated fat, increase aerobic activity.`]);
+  if (a.bmi > 25)           recs.push(['Work towards a healthier BMI',  `BMI ${a.bmi.toFixed(1)}. Even 5–10% weight reduction lowers cardiovascular risk significantly.`]);
+  if (a.cigs_per_day > 0)   recs.push(['Quit smoking',                  `You smoke ${a.cigs_per_day} cigarettes per day. Quitting reduces heart risk within weeks.`]);
+  if (a.glucose > 100)      recs.push(['Monitor your blood sugar',      `Glucose ${a.glucose} mg/dL. Normal fasting range: 70–99 mg/dL.`]);
+  if (a.diabetes)           recs.push(['Manage diabetes actively',      'Work with your doctor to keep HbA1c and blood sugar within target ranges.']);
+  if (a.prevalent_hyp)      recs.push(['Control your hypertension',     'Consistent blood pressure management through medication, diet, and lifestyle is essential.']);
+  recs.push(['See your doctor', `With a ${pct ?? '?'}% estimated risk, discuss these results with a healthcare professional.`]);
+
+  const recRows = recs.map(([title, detail], i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+      <div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:#EAF2EC;
+                  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#3D7A5A">${i + 1}</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#1C2B22">${title}</div>
+        <div style="font-size:11px;color:#6B7D72;line-height:1.5;margin-top:2px">${detail}</div>
+      </div>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>CardioXAI Report — ${recorded}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;font-size:13px;color:#1C2B22;
+         background:#fff;padding:32px 40px;max-width:760px;margin:0 auto}
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+    .logo{width:32px;height:32px;background:#EAF2EC;border-radius:8px;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    h1{font-size:20px;color:#3D7A5A}
+    .meta{font-size:11px;color:#6B7D72;margin-bottom:28px}
+    .risk-banner{background:#F7FAF7;border:1.5px solid #DDE8DD;border-radius:12px;
+                 padding:20px 24px;display:flex;align-items:center;gap:24px;margin-bottom:24px}
+    .gauge-text{font-size:36px;font-weight:800;color:${riskColor};line-height:1}
+    .risk-label{display:inline-block;
+                background:${pct !== null && pct > 30 ? '#FEF2F2' : pct !== null && pct > 15 ? '#FFFBEB' : '#EAF2EC'};
+                color:${riskColor};font-size:12px;font-weight:700;padding:3px 10px;
+                border-radius:20px;margin-bottom:6px}
+    .risk-desc{font-size:12px;color:#4A6655;line-height:1.6;max-width:380px}
+    .section{margin-bottom:24px}
+    .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+                   color:#6B7D72;border-bottom:1px solid #DDE8DD;padding-bottom:5px;margin-bottom:12px}
+    .inputs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px}
+    .input-item{font-size:12px}
+    .input-label{color:#6B7D72;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+    .input-val{font-weight:600;color:#1C2B22}
+    .disclaimer{margin-top:28px;padding:10px 14px;background:#FFF8F0;
+                border-left:3px solid #D97706;border-radius:4px;
+                font-size:11px;color:#6B4C1A;line-height:1.6}
+    .footer{margin-top:24px;text-align:center;font-size:10px;color:#9AA89F;
+            border-top:1px solid #DDE8DD;padding-top:12px}
+    @media print{body{padding:16px 24px}@page{margin:1.2cm}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3D7A5A" stroke-width="2" stroke-linecap="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </div>
+    <h1>CardioXAI Risk Report</h1>
+  </div>
+  <p class="meta">Assessment recorded: ${recorded} &nbsp;·&nbsp; Report ID: #${a.id}</p>
+
+  ${pct !== null ? `
+  <div class="risk-banner">
+    <div>
+      <div class="gauge-text">${pct}%</div>
+      <div style="font-size:11px;color:#6B7D72;margin-top:2px">10-year CHD risk</div>
+    </div>
+    <div>
+      <div class="risk-label">${riskDesc}</div>
+      <p class="risk-desc">
+        Your predicted 10-year coronary heart disease risk is <strong>${pct}%</strong>.
+        This is a research estimate — not a clinical diagnosis.
+      </p>
+    </div>
+  </div>` : '<p style="color:#6B7D72;margin-bottom:24px">Risk score not available for this assessment.</p>'}
+
+  <div class="section">
+    <div class="section-title">Patient Input Values</div>
+    <div class="inputs-grid">
+      ${[
+        ['Age',               `${a.age} years`],
+        ['Sex',               sexStr],
+        ['Systolic BP',       `${a.sys_bp} mmHg`],
+        ['Diastolic BP',      `${a.dia_bp} mmHg`],
+        ['Total Cholesterol', `${a.tot_chol} mg/dL`],
+        ['Glucose',           `${a.glucose} mg/dL`],
+        ['BMI',               a.bmi.toFixed(1)],
+        ['Heart Rate',        `${a.heart_rate} bpm`],
+        ['Cigarettes/day',    String(a.cigs_per_day)],
+        ['Diabetes',          a.diabetes ? 'Yes' : 'No'],
+        ['BP Medication',     a.bp_meds ? 'Yes' : 'No'],
+        ['Hypertension',      a.prevalent_hyp ? 'Yes' : 'No'],
+        ['History of Stroke', a.prevalent_stroke ? 'Yes' : 'No'],
+      ].map(([label, val]) => `
+        <div class="input-item">
+          <div class="input-label">${label}</div>
+          <div class="input-val">${val}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Personalised Recommendations</div>
+    ${recRows}
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Research prototype only.</strong> CardioXAI is built on the Framingham Heart Study dataset
+    for academic research purposes. It does <strong>not</strong> provide medical advice and is
+    <strong>not</strong> a substitute for professional clinical assessment. Always consult a qualified
+    healthcare professional for any medical decisions.
+  </div>
+  <div class="footer">CardioXAI &nbsp;·&nbsp; Academic Research Project &nbsp;·&nbsp; Not validated for clinical use</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=820,height=900');
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 400);
+}

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ClipboardList, HeartPulse, TrendingUp, CalendarDays, Plus } from 'lucide-react';
+import { ClipboardList, HeartPulse, TrendingUp, CalendarDays, Plus, Download } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { getAssessments } from '../services/assessmentService';
 import { ApiError } from '../services/api';
 import type { Assessment } from '../types/assessment';
 import { formatDate, formatRiskLabel } from '../utils/formatters';
+import { downloadAssessmentReport } from '../utils/reportDownload';
 
 function RiskBadge({ prob }: { prob: number | null }) {
   if (prob === null) return (
@@ -185,7 +186,7 @@ export default function PastAssessmentsPage() {
         {!loading && assessments.length > 0 && (
           <div className="card overflow-hidden">
             {/* Table head */}
-            <div className="grid grid-cols-[1fr_140px_160px_120px_100px] items-center
+            <div className="grid grid-cols-[1fr_130px_150px_110px_90px_44px] items-center
                             px-6 py-3 bg-brand-bg border-b border-brand-border
                             text-xs font-semibold text-brand-muted uppercase tracking-wide">
               <span className="flex items-center gap-1.5">
@@ -194,7 +195,8 @@ export default function PastAssessmentsPage() {
               <span>Risk Score</span>
               <span>Status</span>
               <span>Sex / Age</span>
-              <span className="text-right">Risk Bar</span>
+              <span>Risk Bar</span>
+              <span></span>
             </div>
 
             {/* Rows */}
@@ -202,7 +204,7 @@ export default function PastAssessmentsPage() {
               {assessments.map((a, i) => (
                 <div
                   key={a.id}
-                  className="grid grid-cols-[1fr_140px_160px_120px_100px] items-center
+                  className="grid grid-cols-[1fr_130px_150px_110px_90px_44px] items-center
                              px-6 py-4 hover:bg-brand-bg/60 transition-colors"
                 >
                   {/* Date + index */}
@@ -230,9 +232,22 @@ export default function PastAssessmentsPage() {
                   </span>
 
                   {/* Mini bar */}
-                  <div className="w-24 ml-auto">
+                  <div className="w-24">
                     <RiskBar prob={a.prediction_probability} />
                   </div>
+
+                  {/* Download button */}
+                  {!a.is_stub && a.prediction_probability !== null && (
+                    <button
+                      onClick={() => downloadAssessmentReport(a)}
+                      title={`Download report for ${formatDate(a.created_at)}`}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center
+                                 text-brand-muted hover:text-brand-green hover:bg-brand-green-light
+                                 transition-colors ml-auto"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
