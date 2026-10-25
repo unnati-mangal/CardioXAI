@@ -4,10 +4,8 @@ import { Heart, Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.tsx';
 
 const landingLinks = [
-  { label: 'Home',         href: '/' },
-  { label: 'About',        href: '/#about' },
-  { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Features',     href: '/#features' },
+  { label: 'Home',  href: '/' },
+  { label: 'About', href: '/#about' },
 ];
 
 export default function Navbar() {
